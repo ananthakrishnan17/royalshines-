@@ -1,0 +1,453 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  margin-top: 60px;
+  background: linear-gradient(135deg, #fff8f0, #fde2d0);
+  color: #333;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  background: rgb(255, 0, 0);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: goldenrod;
+}
+
+.navbar nav a {
+  margin-left: 20px;
+  text-decoration: none;
+  color: black;
+  font-weight: 500;
+}
+.navbar nav a:hover,
+.navbar nav a.active {
+  color: goldenrod;
+}
+
+/* Header */
+header {
+  background-color: #b8860b;
+  color: white;
+  text-align: center;
+  padding: 1.2rem;
+  font-size: 1.8rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  position: sticky;
+  top: 65px;
+  z-index: 150;
+}
+
+/* ===== Collection Intro Section ===== */
+.collection-top {
+  text-align: center;
+  background: linear-gradient(120deg, #fff2cc, #ffe4b5);
+  padding: 40px 20px;
+  border-bottom: 3px solid #d4a017;
+}
+
+.collection-top h2 {
+  font-size: 2rem;
+  color: #b8860b;
+  margin-bottom: 10px;
+}
+
+.collection-top p {
+  font-size: 1rem;
+  color: #555;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ===== Search Bar ===== */
+.search-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 15px;
+  flex-wrap: wrap;
+}
+
+.search-container input {
+  padding: 20px 60px 20px 25px;
+  font-size: 1.4rem;
+  border: 2px solid #ddd;
+  border-radius: 25px;
+  outline: none;
+  width: 100%;
+  max-width: 700px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE1IDExSDExVjE1SDE1VjExWk0xNiAxMEgxMFYxNkgxNlYTB6IiBmaWxsPSIjYWFhIi8+Cjwvc3ZnPgo=') no-repeat right 20px center;
+  background-size: 24px;
+}
+
+.search-container input:focus {
+  border-color: #b8860b;
+  box-shadow: 0 6px 15px rgba(184, 134, 11, 0.3);
+  background-color: #fff;
+}
+
+/* ===== Category Chips ===== */
+.category-chips {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+  overflow-x: auto;
+  padding: 0 10px;
+}
+
+.category-chips .chip {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background-color: #f0f0f0;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.category-chips .chip.active {
+  background-color: #b8860b;
+  color: white;
+}
+
+.category-chips .chip:hover {
+  background-color: #d4a017;
+  color: white;
+}
+
+/* ===== Collection Grid (Updated for 5 items per row) ===== */
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 equal columns */
+  gap: 25px;
+  padding: 20px 30px;
+  justify-content: center;
+}
+
+/* ===== Item Card (Updated) ===== */
+.item-card {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+
+  width: 100%; /* fill grid cell */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.item-card img {
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+  cursor: zoom-in;
+}
+
+.item-card h3 {
+  padding: 10px 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+/* Hover Effects */
+.item-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.item-card img:hover {
+  transform: scale(1.05);
+}
+
+/* ===== Buttons ===== */
+.item-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.item-buttons button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.item-buttons button:first-child {
+  background: #d4a017;
+}
+
+.item-buttons button:first-child:hover {
+  background: #b58910;
+}
+
+.item-buttons button:last-child {
+  background: #ff6f00;
+}
+
+.item-buttons button:last-child:hover {
+  background: #e65c00;
+}
+
+/* ===== Zoom Overlay ===== */
+.zoom-overlay {
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100vw; 
+  height: 100vh;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease;
+}
+
+.zoom-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.zoom-overlay img {
+  max-width: 85%;
+  max-height: 85%;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(255,255,255,0.3);
+  animation: zoomIn 0.4s ease forwards;
+  cursor: zoom-out;
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.6); opacity: 0.5; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ===== Edit Form Overlay ===== */
+.edit-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.edit-collection-form {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 500px;
+  animation: slideIn 0.3s ease forwards;
+}
+
+.edit-collection-form h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #b8860b;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.edit-collection-form input,
+.edit-collection-form select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.edit-collection-form input:focus,
+.edit-collection-form select:focus {
+  border-color: #b8860b;
+  outline: none;
+  box-shadow: 0 0 5px rgba(184, 134, 11, 0.3);
+}
+
+.edit-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.edit-buttons button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.edit-buttons button[type="submit"] {
+  background: #28a745;
+  color: white;
+}
+
+.edit-buttons button[type="submit"]:hover {
+  background: #218838;
+}
+
+.edit-buttons button[type="button"] {
+  background: #dc3545;
+  color: white;
+}
+
+.edit-buttons button[type="button"]:hover {
+  background: #c82333;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ===== Admin Add Section ===== */
+.admin-add-section {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.add-collection-btn {
+  background: #b8860b;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-collection-btn:hover {
+  background: #a0780a;
+}
+
+/* ===== Add Collection Form ===== */
+.add-collection-form {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 500px;
+  margin: 20px auto;
+  animation: slideIn 0.3s ease forwards;
+}
+
+.add-collection-form input,
+.add-collection-form select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.add-collection-form input:focus,
+.add-collection-form select:focus {
+  border-color: #b8860b;
+  outline: none;
+  box-shadow: 0 0 5px rgba(184, 134, 11, 0.3);
+}
+
+.add-collection-form button {
+  width: 100%;
+  padding: 12px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-collection-form button:hover {
+  background: #218838;
+}
+
+/* ===== Footer ===== */
+footer {
+  background: #000 !important;
+  color: #fff !important;
+  text-align: center;
+  padding: 25px 15px;
+  margin-top: 40px;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
+footer p {
+  margin: 5px 0;
+  color: #fff !important;
+}
+
+footer a {
+  color: #fff !important;
+  text-decoration: none;
+  font-weight: 500;
+  margin: 0 10px;
+  transition: color 0.3s ease;
+}
+
+footer a:hover {
+  color: goldenrod;
+}

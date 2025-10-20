@@ -1,0 +1,3 @@
+- [x] Add backend API for sales report aggregation by day, month, year
+- [x] Update AdminDashboard.jsx to include sales report section with period filter and table display
+- [ ] Test the sales report functionality

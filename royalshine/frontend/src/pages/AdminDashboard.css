@@ -1,0 +1,154 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f5f7fa;
+}
+
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Top Navbar */
+.top-navbar {
+  background-color: #2c3e50;
+  color: #fff;
+  padding: 15px 30px;
+  font-size: 1.8rem;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  text-align: center;
+  padding: 20px 10px;
+  background-color: #ecf0f1;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: #2c3e50;
+}
+
+.dashboard-header p {
+  margin-top: 10px;
+  color: #555;
+}
+
+/* Summary Cards */
+.summary-cards {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 40px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.card {
+  flex: 1 1 200px;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.card h3 {
+  margin: 0 0 10px;
+  color: #34495e;
+}
+
+.card p {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.users-card { background-color: #f1c40f; color: #fff; }
+.contacts-card { background-color: #e67e22; color: #fff; }
+.orders-card { background-color: #1abc9c; color: #fff; }
+.income-card { background-color: #3498db; color: #fff; }
+.profit-card { background-color: #9b59b6; color: #fff; }
+
+/* Dashboard Content */
+.dashboard-content {
+  flex: 1;
+  padding: 20px 40px;
+}
+
+/* Section Styling */
+.dashboard-section {
+  margin-bottom: 40px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.dashboard-section h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  color: #34495e;
+}
+
+/* Table Styling */
+.table-container {
+  overflow-x: auto;
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.styled-table thead tr {
+  background-color: #34495e;
+  color: #ffffff;
+  text-align: left;
+}
+
+.styled-table th, .styled-table td {
+  padding: 12px 15px;
+}
+
+.styled-table tbody tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.styled-table tbody tr:hover {
+  background-color: #d1ecf1;
+  cursor: pointer;
+}
+
+.empty-msg {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 10px;
+}
+
+.report-filter {
+  margin-bottom: 15px;
+}
+
+.report-filter label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.report-filter select {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}

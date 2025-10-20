@@ -1,0 +1,52 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.navbar {
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: goldenrod;
+}
+
+nav ul {
+  display: flex;
+  gap: 30px;
+  list-style: none;
+}
+
+nav ul li a {
+  text-decoration: none;
+  font-weight: 600;
+  color: #333;
+  transition: 0.3s;
+}
+
+nav ul li a:hover,
+nav ul li a.active {
+  color: goldenrod;
+}
+.user-name {
+  cursor: pointer;
+  font-weight: 600;
+  color: goldenrod;
+  transition: 0.3s;
+}
+
+.user-name:hover {
+  color: #d4a017;
+  text-decoration: underline;
+}
+ /* 👇 Clickable admin name */
+ 
