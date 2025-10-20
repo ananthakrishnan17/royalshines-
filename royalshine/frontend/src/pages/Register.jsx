@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ Add this for navigation
 import "./Register.css";
 
+
 const Register = () => {
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
