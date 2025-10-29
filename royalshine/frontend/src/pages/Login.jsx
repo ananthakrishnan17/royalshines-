@@ -5,11 +5,12 @@ import "./Login.css";
 
 const Login = () => {
   const [activeTab, setActiveTab] = useState("user");
+  const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userPassword, setUserPassword] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
-  const [showPassword, setShowPassword] = useState({ user: false, admin: false });
+  const [showPassword, setShowPassword] = useState({ admin: false, user: false });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
@@ -75,16 +76,16 @@ const Login = () => {
     setMessage("");
 
     try {
-      const res = await axios.post("http://localhost:5000/api/admin/login", {
+      const res = await axios.post("http://localhost:5000/api/login", {
         email: adminEmail,
         password: adminPassword,
       });
 
-      if (res.data.success) {
+      if (res.data.success && res.data.isAdmin) {
         setMessage("✅ Admin Login Successful!");
 
         // ✅ Save admin session
-        localStorage.setItem("adminToken", res.data.adminToken);
+        localStorage.setItem("adminToken", res.data.token);
         localStorage.setItem("adminEmail", adminEmail);
 
         setTimeout(() => {
@@ -139,7 +140,8 @@ const Login = () => {
           <button
             className={activeTab === "user" ? "active" : ""}
             onClick={() => handleTabClick("user")}
-          >
+
+>
             User Login
           </button>
         </div>
@@ -148,7 +150,7 @@ const Login = () => {
         {activeTab === "user" && (
           <div className="form-box active">
             <form onSubmit={handleUserLogin}>
-              <label>User Email:</label>
+              <label>Email:</label>
               <input
                 type="email"
                 value={userEmail}
