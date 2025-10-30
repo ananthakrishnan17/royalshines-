@@ -106,6 +106,7 @@ export default function Checkout() {
                     <option value="cash">Cash on Delivery</option>
                     <option value="card">Card</option>
                     <option value="upi">UPI</option>
+                    <option value="netbanking">Net Banking</option>
                   </select>
                 </div>
                 <button className="btn-place-order" onClick={handleProceedToPay}>Proceed to Pay</button>

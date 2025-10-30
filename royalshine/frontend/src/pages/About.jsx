@@ -1,5 +1,6 @@
 import React from "react";
 import Navbar from "../components/Navbar"; // ✅ Import Navbar
+import Footer from "../components/Footer"; // ✅ Import Footer
 import "./About.css";
 
 function About() {
@@ -59,13 +60,45 @@ function About() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer>
-        <div className="footer-content">
-          <p>📍 Near Nellaiappar Temple, Tirunelveli | 📞 +91 9150921153</p>
-          <p>© 2025 Royal Shine Jewels. All rights reserved.</p>
+      {/* Why Choose Us Section */}
+      <section className="why-choose-section">
+        <h2>Why Choose Royal Shine?</h2>
+        <div className="why-choose-cards">
+          <div className="why-choose-card">
+            <div className="card-icon">💎</div>
+            <h3>Expert Craftsmanship</h3>
+            <p>Over 25 years of experience in creating exquisite jewelry pieces with meticulous attention to detail.</p>
+          </div>
+          <div className="why-choose-card">
+            <div className="card-icon">🏆</div>
+            <h3>Award-Winning Designs</h3>
+            <p>Recognized for innovative designs that blend traditional elegance with contemporary trends.</p>
+          </div>
+          <div className="why-choose-card">
+            <div className="card-icon">🚚</div>
+            <h3>Free Home Delivery</h3>
+            <p>Complimentary doorstep delivery across Tamil Nadu with secure packaging and insurance.</p>
+          </div>
+          <div className="why-choose-card">
+            <div className="card-icon">💰</div>
+            <h3>Best Price Guarantee</h3>
+            <p>Competitive pricing with no hidden costs and transparent gold rates updated daily.</p>
+          </div>
+          <div className="why-choose-card">
+            <div className="card-icon">🎨</div>
+            <h3>Custom Design Service</h3>
+            <p>Personalized jewelry creation service to bring your unique vision to life.</p>
+          </div>
+          <div className="why-choose-card">
+            <div className="card-icon">📞</div>
+            <h3>24/7 Support</h3>
+            <p>Dedicated customer support available round the clock for all your jewelry needs.</p>
+          </div>
         </div>
-      </footer>
+      </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

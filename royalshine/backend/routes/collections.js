@@ -20,9 +20,9 @@ router.get("/", (req, res) => {
 
 // Add new collection (admin only)
 router.post("/", (req, res) => {
-  const { title, img, category, price, quantity } = req.body;
-  const sql = "INSERT INTO collections (title, img, category, price, quantity) VALUES (?, ?, ?, ?, ?)";
-  db.query(sql, [title, img, category, price, quantity], (err, result) => {
+  const { title, img, images, category, price, quantity } = req.body;
+  const sql = "INSERT INTO collections (title, img, images, category, price, quantity) VALUES (?, ?, ?, ?, ?, ?)";
+  db.query(sql, [title, img, JSON.stringify(images || []), category, price, quantity], (err, result) => {
     if (err) return res.status(500).json({ success: false, message: "Failed to add collection" });
     res.json({ success: true, message: "Collection added successfully" });
   });
@@ -31,9 +31,9 @@ router.post("/", (req, res) => {
 // Update collection (admin only)
 router.put("/:id", (req, res) => {
   const { id } = req.params;
-  const { title, img, category, price, quantity } = req.body;
-  const sql = "UPDATE collections SET title=?, img=?, category=?, price=?, quantity=? WHERE id=?";
-  db.query(sql, [title, img, category, price, quantity, id], (err, result) => {
+  const { title, img, images, category, price, quantity } = req.body;
+  const sql = "UPDATE collections SET title=?, img=?, images=?, category=?, price=?, quantity=? WHERE id=?";
+  db.query(sql, [title, img, JSON.stringify(images || []), category, price, quantity, id], (err, result) => {
     if (err) return res.status(500).json({ success: false, message: "Failed to update collection" });
     res.json({ success: true, message: "Collection updated successfully" });
   });

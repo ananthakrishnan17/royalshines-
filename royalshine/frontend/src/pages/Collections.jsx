@@ -32,18 +32,28 @@ export default function Collections() {
   const navigate = useNavigate();
   const { addToCart } = useContext(CartContext);
   const isAdmin = localStorage.getItem("adminToken") === "admin_logged_in";
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
     fetchCollections();
 
     // If user logged in after selecting cart item
     const pendingCartItem = localStorage.getItem("pendingCartItem");
-    if (pendingCartItem) {
+    if (pendingCartItem && token && user) {
       const item = JSON.parse(pendingCartItem);
       addToCart(item);
       localStorage.removeItem("pendingCartItem");
     }
-  }, []);
+
+    // If user logged in after selecting wishlist item
+    const pendingWishlistItem = localStorage.getItem("pendingWishlistItem");
+    if (pendingWishlistItem && token && user) {
+      const item = JSON.parse(pendingWishlistItem);
+      handleAddToWishlist(item);
+      localStorage.removeItem("pendingWishlistItem");
+    }
+  }, [token, user]);
 
   // 🔹 Fetch all collections from database
   const fetchCollections = async () => {
@@ -82,12 +92,22 @@ export default function Collections() {
     filterCollections(term, activeCategory);
   };
 
-  // 🔹 Wishlist (for normal users)
-  const handleWishlist = async (item) => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
+  // 🔹 Handle add to cart
+  const handleAddToCart = (item) => {
+    if (!token || !user) {
+      localStorage.setItem("pendingCartItem", JSON.stringify(item));
+      alert("❌ Please login first!");
+      navigate("/login");
+      return;
+    }
+    addToCart(item);
+  };
+
+  // 🔹 Handle add to wishlist
+  const handleAddToWishlist = async (item) => {
     if (!token || !user) {
       localStorage.setItem("pendingWishlistItem", JSON.stringify(item));
+      alert("❌ Please login first!");
       navigate("/login");
       return;
     }
@@ -95,35 +115,21 @@ export default function Collections() {
     try {
       const res = await axios.post(
         "http://localhost:5000/api/wishlist/add",
-        {
-          productId: item.id,
-          productName: item.title,
-          productImage: item.img,
-          productCategory: item.category,
-        },
+        { productId: item.id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      if (res.data.success) alert(`✅ ${item.title} added to wishlist!`);
-      else alert(res.data.message || "❌ Failed to add to wishlist");
+      if (res.data.success) {
+        alert("✅ Added to wishlist!");
+      } else {
+        alert(res.data.message || "❌ Failed to add to wishlist");
+      }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error adding to wishlist:", error);
       alert("Server error while adding to wishlist");
     }
   };
 
-  // 🔹 Add to cart
-  const handleAddToCart = (item) => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-    if (!token || !user) {
-      alert("Please login to add items to cart.");
-      localStorage.setItem("pendingCartItem", JSON.stringify(item));
-      navigate("/login");
-      return;
-    }
-    addToCart(item);
-  };
+
 
   // 🔹 Add new collection
   const handleAddCollection = async (e) => {
@@ -199,6 +205,7 @@ export default function Collections() {
       <Navbar />
 
       <div className="collections-header">
+        {isAdmin && <h2 className="admin-welcome">Welcome, Admin</h2>}
         <h1>💎 Royal Shine Jewels Collection</h1>
         <input
           type="text"
@@ -217,6 +224,11 @@ export default function Collections() {
             </button>
           ))}
         </div>
+        {isAdmin && (
+          <button className="add-collection-btn" onClick={() => setShowAddForm(!showAddForm)}>
+            Add Collection
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -230,24 +242,22 @@ export default function Collections() {
                 <h3>{item.title}</h3>
                 <p>₹{item.price}</p>
                 <p className="quantity">Stock: {item.quantity}</p>
-                <div className="item-buttons">
-                  {isAdmin ? (
-                    <>
-                      <button onClick={() => handleEditItem(item)}>✏️ Edit</button>
-                      <button onClick={() => handleDeleteItem(item.id)}>🗑️ Delete</button>
-                    </>
-                  ) : (
-                    <div className="user-buttons">
-                      <button onClick={() => handleWishlist(item)}>❤️ Wishlist</button>
-                      <button
-                        onClick={() => handleAddToCart(item)}
-                        disabled={item.quantity <= 0}
-                      >
-                        {item.quantity <= 0 ? "Out of Stock" : "🛒 Add to Cart"}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {!localStorage.getItem("adminToken") && (
+                  <div className="item-actions">
+                    <button
+                      className="add-to-cart-btn"
+                      onClick={() => handleAddToCart(item)}
+                    >
+                      Add to Cart
+                    </button>
+                    <button
+                      className="add-to-wishlist-btn"
+                      onClick={() => handleAddToWishlist(item)}
+                    >
+                      ❤️ Wishlist
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           ) : (

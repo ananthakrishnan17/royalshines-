@@ -1,6 +1,9 @@
 import "./Home.css";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import FestivalOffer from "../components/FestivalOffer";
+import Footer from "../components/Footer";
+import Chatbot from "../components/Chatbot";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -69,6 +72,9 @@ function Home() {
         </div>
       </section>
 
+      {/* Festival Offer */}
+      <FestivalOffer />
+
       {/* About */}
       <section className="about-preview">
         <h2>Why Choose Royal Shine?</h2>
@@ -122,12 +128,7 @@ function Home() {
       </section>
 
       {/* Footer */}
-      <footer>
-        <div className="footer-content">
-          <p>📍 Near Nellaiappar Temple, Tirunelveli | 📞 +91 9150921153</p>
-          <p>© 2025 Royal Shine Jewels. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
 
       {/* WhatsApp */}
       <a
@@ -140,6 +141,9 @@ function Home() {
       </a>
 
       <button id="backToTop" title="Back to Top">↑</button>
+
+      {/* Chatbot */}
+      <Chatbot />
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ Add this for navigation
+import { GoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 import "./Register.css";
 
 
@@ -40,6 +42,50 @@ const Register = () => {
       console.error("❌ Register Error:", error);
       setMessage("❌ Something went wrong. Try again later.");
     }
+  };
+
+  // ✅ GOOGLE LOGIN FUNCTION
+  const handleGoogleLoginSuccess = async (credentialResponse) => {
+    setMessage("");
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/google-login", {
+        credential: credentialResponse.credential,
+      });
+
+      if (res.data.success) {
+        setMessage("✅ Google Login Successful!");
+
+        // ✅ Save token, userId, and user info
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("userId", res.data.userId);
+        localStorage.setItem("userName", res.data.user.fullname);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+
+        // ✅ Check if there's a pending wishlist item or cart item
+        const pendingWishlistItem = localStorage.getItem("pendingWishlistItem");
+        const pendingCartItem = localStorage.getItem("pendingCartItem");
+
+        setTimeout(() => {
+          if (pendingWishlistItem) {
+            navigate("/collections");
+          } else if (pendingCartItem) {
+            navigate("/collections");
+          } else {
+            navigate("/user-dashboard");
+          }
+        }, 800);
+      } else {
+        setMessage("❌ " + (res.data.message || "Google login failed"));
+      }
+    } catch (err) {
+      console.error("❌ Google Login Error:", err);
+      setMessage("❌ " + (err.response?.data?.message || "Google login failed"));
+    }
+  };
+
+  const handleGoogleLoginError = () => {
+    setMessage("❌ Google login failed");
   };
 
   return (
@@ -124,6 +170,16 @@ const Register = () => {
               <button type="submit">Create Account</button>
             </div>
           </form>
+
+          {/* Google Login Button */}
+          <div className="google-login">
+            <GoogleLogin
+              clientId="214862082349-v26rc2j9l4k2lc5ciosmadk8feps8a29.apps.googleusercontent.com"
+              onSuccess={handleGoogleLoginSuccess}
+              onError={handleGoogleLoginError}
+            />
+          </div>
+
           <p>
             Already have an account? <a href="/login">Login here</a>
           </p>

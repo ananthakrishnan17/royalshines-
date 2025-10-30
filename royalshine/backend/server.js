@@ -2,349 +2,380 @@
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2");
-const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
+const { OAuth2Client } = require("google-auth-library");
 
 // Routes
-const authRoutes = require("./routes/auth");
 const collectionsRoutes = require("./routes/collections");
+const authRoutes = require("./routes/auth");
+const wishlistRoutes = require("./routes/wishlist");
+const ordersRoutes = require("./orders");
+const feedbackRoutes = require("./routes/feedback");
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-const SECRET_KEY = "royalshine_secret"; // use env in production
-
-// ==================== DATABASE ====================
+// --- GLOBAL CONSTANTS ---
+const SECRET_KEY = "royalshine_secret";
+// ---
+// ==================== DATABASE (Promise-based connection) ====================
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "Srini@2005",
-  database: "royalshines",
-});
+    host: "localhost",
+    user: "root",
+    password: "Srini@2005",
+    database: "royalshines",
+}).promise(); 
 
 db.connect((err) => {
-  if (err) console.error("❌ DB connection failed:", err);
-  else console.log("✅ MySQL Connected to royalshine DB");
+    if (err) console.error("❌ DB connection failed:", err.stack);
+    else console.log("✅ MySQL Connected to royalshine DB");
 });
 
-// ==================== REGISTER API ====================
+// Middleware to attach global objects to every request
+app.use((req, res, next) => {
+    req.db = db;
+    req.SECRET_KEY = SECRET_KEY;
+    next();
+});
+
+// ==================== EMAIL CONFIG ====================
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: "maniselvisrini@gmail.com", 
+        pass: "tpnmvoxklvjmedlp", 
+    },
+});
+transporter.verify((error, success) => {
+    if (error) console.error("Email transporter error:", error);
+    else console.log("✅ Email server ready to send messages");
+});
+
+
+// ==================== REGISTER API (Synchronized to use 'users' table) ====================
 app.post("/api/register", async (req, res) => {
-  const { fullname, email, phone, password } = req.body;
+    const { fullname, email, phone, password } = req.body;
 
-  if (!fullname || !email || !phone || !password)
-    return res.status(400).json({ success: false, message: "All fields required" });
+    if (!fullname || !email || !phone || !password)
+        return res.status(400).json({ success: false, message: "All fields required" });
 
-  try {
-    // Check if email already exists in register
-    const checkSql = "SELECT * FROM register WHERE email=?";
-    db.query(checkSql, [email], async (err, result) => {
-      if (err) return res.status(500).json({ success: false, message: "Database error" });
-      if (result.length > 0) return res.json({ success: false, message: "Email already registered" });
+    try {
+        const [existing] = await db.query("SELECT id FROM users WHERE email=?", [email]);
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+        if (existing.length > 0)
+            return res.json({ success: false, message: "Email already registered" });
 
-      // Insert into register
-      const insertRegisterSql = "INSERT INTO register (fullname, email, phone, password) VALUES (?, ?, ?, ?)";
-      db.query(insertRegisterSql, [fullname, email, phone, hashedPassword], (err2, result2) => {
-        if (err2) return res.status(500).json({ success: false, message: "Database error" });
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const registerId = result2.insertId;
-
-        // Insert into users using register_id
-        const insertUserSql = `
-          INSERT INTO users (register_id, username, email, password, role)
-          VALUES (?, ?, ?, ?, ?)
-        `;
-        db.query(insertUserSql, [registerId, fullname, email, hashedPassword, "user"], (err3) => {
-          if (err3) console.error("❌ DB error inserting into users:", err3);
-          res.json({ success: true, message: "Registration successful", userId: registerId });
+        // Insert directly into the 'users' table (FIXED)
+        const [result] = await db.query(
+            "INSERT INTO users (fullname, email, phone, password) VALUES (?, ?, ?, ?)",
+            [fullname, email, phone, hashedPassword]
+        );
+        const newUserId = result.insertId;
+        
+        // Send confirmation email (FIXED with placeholder HTML)
+        const mailOptions = { 
+            from: '"Royal Shine Jewels" <maniselvisrini@gmail.com>',
+            to: email,
+            subject: "Welcome to Royal Shine Jewels - Registration Confirmation",
+            html: `
+                <div style="font-family: Arial, sans-serif;">
+                    <h2>Welcome, ${fullname}!</h2>
+                    <p>Your Royal Shine Jewels account has been successfully created.</p>
+                </div>
+            `,
+        };
+        
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) console.error("❌ Error sending email:", error);
+            else console.log("✅ Confirmation email sent:", info.response);
         });
-      });
-    });
+
+        res.json({
+            success: true,
+            message: "Registration successful! Please check your email for confirmation.",
+            userId: newUserId,
+        });
+    } catch (err) {
+        console.error("❌ Registration error:", err);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+// ==================== LOGIN API (Synchronized to use 'users' table) ====================
+app.post("/api/login", async (req, res) => {
+    const { name, email, password } = req.body;
+
+    if (!password) return res.status(400).json({ success: false, message: "Password required" });
+
+    // Admin login check
+    if (email === "admin@royal.com" && password === "admin123") {
+        const adminToken = jwt.sign({ id: 0, email: email, role: 'admin' }, SECRET_KEY, { expiresIn: "2h" });
+        return res.json({ success: true, isAdmin: true, token: adminToken, message: "Admin login successful" });
+    }
+
+    // User login by name or email
+    if (!name && !email) return res.status(400).json({ success: false, message: "Name or Email required" });
+
+    try {
+        let query = "SELECT * FROM users WHERE ";
+        let params = [];
+
+        if (name) {
+            query += "fullname = ?";
+            params.push(name);
+        } else {
+            query += "email = ?";
+            params.push(email);
+        }
+
+        const [result] = await db.query(query, params);
+        if (result.length === 0) return res.json({ success: false, message: "Invalid Name/Email or Password" });
+
+        const user = result[0];
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return res.json({ success: false, message: "Invalid Name/Email or Password" });
+
+        // Generate token with 'id' from the 'users' table
+        const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: "2h" });
+
+        res.json({
+            success: true,
+            token,
+            userId: user.id,
+            user: {
+                fullname: user.fullname,
+                email: user.email,
+                phone: user.phone,
+                id: user.id // CRITICAL: Ensure ID is sent to frontend
+            },
+            isAdmin: false,
+            message: "Login successful",
+        });
+    } catch (err) {
+        console.error("❌ Login error:", err);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+
+// ==================== GET USERS (for admin dashboard) ====================
+app.get("/api/users", async (req, res) => {
+  try {
+    const [results] = await db.query("SELECT id, fullname, email, phone FROM users ORDER BY id DESC");
+    res.json(results);
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error fetching users:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// ==================== LOGIN API ====================
-app.post("/api/login", (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) return res.status(400).json({ success: false, message: "All fields required" });
-
-  // Admin login
-  if (email === "admin@royal.com" && password === "admin123") {
-    return res.json({ success: true, isAdmin: true, message: "Admin login successful" });
-  }
-
-  const sql = "SELECT * FROM register WHERE email=?";
-  db.query(sql, [email], async (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    if (result.length === 0) return res.json({ success: false, message: "Invalid Email or Password" });
-
-    const registerUser = result[0];
-
-    // Compare password
-    const match = await bcrypt.compare(password, registerUser.password);
-    if (!match) return res.json({ success: false, message: "Invalid Email or Password" });
-
-    // Get user row from users table
-    const getUserSql = "SELECT * FROM users WHERE register_id=?";
-    db.query(getUserSql, [registerUser.id], (err2, userResults) => {
-      if (err2) return res.status(500).json({ success: false, message: "Database error" });
-
-      let user = userResults[0];
-
-      // If user row doesn't exist, create it
-      if (!user) {
-        const insertUserSql = `
-          INSERT INTO users (register_id, username, email, password, role)
-          VALUES (?, ?, ?, ?, ?)
-        `;
-        db.query(insertUserSql, [registerUser.id, registerUser.fullname, registerUser.email, registerUser.password, "user"], (err3, res3) => {
-          if (err3) return res.status(500).json({ success: false, message: "Database error" });
-          user = { id: res3.insertId, ...registerUser, role: "user" };
-          sendLoginResponse(user, registerUser);
-        });
-      } else {
-        sendLoginResponse(user, registerUser);
-      }
-
-      function sendLoginResponse(userRow, registerRow) {
-        const token = jwt.sign({ id: userRow.id, email: registerRow.email }, SECRET_KEY, { expiresIn: "2h" });
-        res.json({
-          success: true,
-          token,
-          userId: userRow.id,
-          user: { id: userRow.id, fullname: registerRow.fullname, email: registerRow.email, phone: registerRow.phone },
-          isAdmin: false,
-          message: "Login successful",
-        });
-      }
-    });
-  });
-});
-
-// ==================== ADMIN LOGIN API ====================
-app.post("/api/admin/login", (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) return res.status(400).json({ success: false, message: "All fields required" });
-
-  // Simple hardcoded admin credentials (for demo purposes)
-  const adminEmail = "admin@royal.com";
-  const adminPassword = "admin123";
-
-  if (email === adminEmail && password === adminPassword) {
-    res.json({
-      success: true,
-      message: "Admin login successful",
-      adminToken: "admin_logged_in"
-    });
-  } else {
-    res.json({ success: false, message: "Invalid admin credentials" });
+// ==================== GET CONTACTS (for admin dashboard) ====================
+app.get("/api/contacts", async (req, res) => {
+  try {
+    const [results] = await db.query("SELECT id, name, email, subject, message, created_at FROM contact_messages ORDER BY created_at DESC");
+    res.json(results);
+  } catch (err) {
+    console.error("❌ Error fetching contacts:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// ==================== AUTH MIDDLEWARE ====================
-function authenticateToken(req, res, next) {
+// ==================== ADMIN REGISTER USER ====================
+app.post("/api/admin/register-user", async (req, res) => {
+  const { fullname, email, phone, password } = req.body;
+
+  // Check for authorization header
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (!token) return res.status(401).json({ success: false, message: "No token provided" });
 
-  jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) return res.status(403).json({ success: false, message: "Invalid token" });
-    req.user = user;
-    next();
-  });
-}
-
-// ==================== WISHLIST ====================
-app.post("/api/wishlist/add", authenticateToken, (req, res) => {
-  const { productId, productName, productImage, productCategory } = req.body;
-  const userId = req.user.id;
-  if (!productId || !productName) return res.status(400).json({ success: false, message: "Product ID and name required" });
-
-  const checkSql = "SELECT * FROM wishlist WHERE user_id = ? AND product_id = ?";
-  db.query(checkSql, [userId, productId], (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    if (results.length > 0) return res.json({ success: false, message: "Item already in wishlist" });
-
-    const insertSql = `
-      INSERT INTO wishlist (user_id, product_id, product_name, product_image, product_category, created_at)
-      VALUES (?, ?, ?, ?, ?, NOW())
-    `;
-    db.query(insertSql, [userId, productId, productName, productImage || null, productCategory || null], (err2, result) => {
-      if (err2) return res.status(500).json({ success: false, message: "Failed to add to wishlist" });
-      res.json({ success: true, message: "Added to Wishlist", wishlistId: result.insertId });
-    });
-  });
-});
-
-app.get("/api/wishlist", authenticateToken, (req, res) => {
-  const userId = req.user.id;
-  const sql = "SELECT * FROM wishlist WHERE user_id = ? ORDER BY created_at DESC";
-  db.query(sql, [userId], (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    res.json({ success: true, wishlist: results });
-  });
-});
-
-app.delete("/api/wishlist/remove/:productId", authenticateToken, (req, res) => {
-  const userId = req.user.id;
-  const { productId } = req.params;
-  const sql = "DELETE FROM wishlist WHERE user_id = ? AND product_id = ?";
-  db.query(sql, [userId, productId], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    if (result.affectedRows === 0) return res.json({ success: false, message: "Item not found" });
-    res.json({ success: true, message: "Removed from wishlist" });
-  });
-});
-// Get wishlist for a specific user
-app.get("/api/wishlist/:userId", async (req, res) => {
-  const { userId } = req.params;
+  // Verify admin token
   try {
-    const [rows] = await db.execute("SELECT * FROM wishlist WHERE user_id = ?", [userId]);
-    res.json({ success: true, wishlist: rows });
-  } catch (error) {
-    console.error("Error fetching wishlist:", error);
+    const decoded = jwt.verify(token, SECRET_KEY);
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ success: false, message: "Unauthorized: Admin access required" });
+    }
+  } catch (err) {
+    console.error("❌ Token verification failed:", err.message);
+    return res.status(403).json({ success: false, message: "Invalid or expired token" });
+  }
+
+  // Validate inputs
+  if (!fullname || !email || !phone || !password) {
+    return res.status(400).json({ success: false, message: "All fields required" });
+  }
+
+  try {
+    // Check if email already exists
+    const [existing] = await db.query("SELECT id FROM users WHERE email=?", [email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ success: false, message: "Email already registered" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insert new user
+    const [result] = await db.query(
+      "INSERT INTO users (fullname, email, phone, password) VALUES (?, ?, ?, ?)",
+      [fullname, email, phone, hashedPassword]
+    );
+    const newUserId = result.insertId;
+
+    // Send confirmation email
+    const mailOptions = {
+      from: '"Royal Shine Jewels" <maniselvisrini@gmail.com>',
+      to: email,
+      subject: "Welcome to Royal Shine Jewels - Account Created by Admin",
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <h2>Welcome, ${fullname}!</h2>
+          <p>Your Royal Shine Jewels account has been created by an administrator.</p>
+          <p>You can now login with your email and password.</p>
+          <p>Best regards,<br>The Royal Shine Jewels Team</p>
+        </div>
+      `,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) console.error("❌ Error sending email:", error);
+      else console.log("✅ Confirmation email sent:", info.response);
+    });
+
+    res.json({
+      success: true,
+      message: "User registered successfully! Confirmation email sent.",
+      userId: newUserId,
+    });
+  } catch (err) {
+    console.error("❌ Admin register user error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-
-// ==================== CONTACT ====================
-app.post("/api/contact", (req, res) => {
+// ==================== CONTACT API ====================
+app.post("/api/contact", async (req, res) => {
   const { name, email, subject, message } = req.body;
-  if (!name || !email || !subject || !message) return res.status(400).json({ success: false, message: "All fields required" });
 
-  const sql = "INSERT INTO contacts (name, email, subject, message, created_at) VALUES (?, ?, ?, ?, NOW())";
-  db.query(sql, [name, email, subject, message], (err) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    res.json({ success: true, message: "Message sent successfully!" });
-  });
-});
-
-// ==================== ADMIN ROUTES ====================
-app.get("/api/contacts", (req, res) => {
-  const sql = "SELECT * FROM contacts ORDER BY created_at DESC";
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    res.json(results);
-  });
-});
-
-app.get("/api/users", (req, res) => {
-  const sql = "SELECT id, fullname, email, phone FROM register ORDER BY id DESC";
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    res.json(results);
-  });
-});
-
-app.get("/api/admin/orders", (req, res) => {
-  const q = `
-    SELECT
-      o.id AS order_id,
-      o.user_id,
-      o.product_name,
-      o.status AS order_status,
-      p.payment_method,
-      p.payment_status,
-      P.CustomerId
-    FROM orders o
-    LEFT JOIN payments p ON o.id = p.order_id
-  `;
-
-  db.query(q, (err, data) => {
-    if (err) {
-      console.error("Error fetching joined data:", err);
-      return res.status(500).json({ error: "Failed to fetch orders" });
-    }
-    return res.json(data);
-  });
-});
-// ==================== CART ====================
-
-// Add item to cart
-app.post("/api/cart/add", authenticateToken, (req, res) => {
-  const { productId, productName, productImage, productCategory, quantity } = req.body;
-  const userId = req.user.id;
-
-  if (!productId || !productName) {
-    return res.status(400).json({ success: false, message: "Product ID and name required" });
+  if (!name || !email || !subject || !message) {
+    return res.status(400).json({ success: false, message: "All fields are required" });
   }
 
-  const checkSql = "SELECT * FROM cart WHERE user_id = ? AND product_id = ?";
-  db.query(checkSql, [userId, productId], (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
+  try {
+    // Insert contact message into database
+    const [result] = await db.query(
+      "INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)",
+      [name, email, subject, message]
+    );
 
-    if (results.length > 0) {
-      // Update quantity if already in cart
-      const updateSql = "UPDATE cart SET quantity = quantity + ? WHERE user_id = ? AND product_id = ?";
-      db.query(updateSql, [quantity || 1, userId, productId], (err2) => {
-        if (err2) return res.status(500).json({ success: false, message: "Failed to update cart" });
-        res.json({ success: true, message: "Cart updated" });
-      });
-    } else {
-      // Insert new item
-      const insertSql = `
-        INSERT INTO cart (user_id, product_id, product_name, product_image, product_category, quantity, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, NOW())
-      `;
-      db.query(insertSql, [userId, productId, productName, productImage || null, productCategory || null, quantity || 1], (err3) => {
-        if (err3) return res.status(500).json({ success: false, message: "Failed to add to cart" });
-        res.json({ success: true, message: "Added to cart" });
-      });
+    // Send email notification to admin
+    const mailOptions = {
+      from: '"Royal Shine Jewels Contact" <maniselvisrini@gmail.com>',
+      to: "maniselvisrini@gmail.com", // Admin email
+      subject: `New Contact Message: ${subject}`,
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <h2>New Contact Message from ${name}</h2>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <p><strong>Message:</strong></p>
+          <p>${message}</p>
+        </div>
+      `,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) console.error("❌ Error sending contact email:", error);
+      else console.log("✅ Contact email sent:", info.response);
+    });
+
+    res.json({ success: true, message: "Message sent successfully!" });
+  } catch (err) {
+    console.error("❌ Contact error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// ==================== GOOGLE LOGIN API ====================
+app.post("/api/google-login", async (req, res) => {
+    const { credential } = req.body;
+
+    if (!credential) return res.status(400).json({ success: false, message: "Credential required" });
+
+    try {
+        // Initialize OAuth2Client with Google Client ID
+        const client = new OAuth2Client("214862082349-v26rc2j9l4k2lc5ciosmadk8feps8a29.apps.googleusercontent.com");
+
+        // Verify the credential token
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: "214862082349-v26rc2j9l4k2lc5ciosmadk8feps8a29.apps.googleusercontent.com", // Same as above
+        });
+
+        const payload = ticket.getPayload();
+        const { email, name, sub: googleId } = payload;
+
+        if (!email) return res.status(400).json({ success: false, message: "Email not provided by Google" });
+
+        // Check if user exists
+        const [existing] = await db.query("SELECT * FROM users WHERE email=?", [email]);
+
+        let user;
+        if (existing.length > 0) {
+            user = existing[0];
+        } else {
+            // Create new user for Google login (no password)
+            const [result] = await db.query(
+                "INSERT INTO users (fullname, email, phone, password) VALUES (?, ?, NULL, NULL)",
+                [name, email]
+            );
+            user = { id: result.insertId, fullname: name, email: email, phone: null };
+        }
+
+        // Generate JWT token
+        const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: "2h" });
+
+        res.json({
+            success: true,
+            token,
+            userId: user.id,
+            user: {
+                fullname: user.fullname,
+                email: user.email,
+                phone: user.phone,
+                id: user.id
+            },
+            isAdmin: false,
+            message: "Google login successful",
+        });
+    } catch (err) {
+        console.error("❌ Google login error:", err);
+        res.status(500).json({ success: false, message: "Google login failed" });
     }
-  });
 });
 
-// Get user cart
-app.get("/api/cart", authenticateToken, (req, res) => {
-  const userId = req.user.id;
-  const sql = "SELECT * FROM cart WHERE user_id = ? ORDER BY created_at DESC";
-  db.query(sql, [userId], (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    res.json({ success: true, cart: results });
-  });
+// ==================== CHECK ORDERS API ====================
+app.get("/api/check-orders", async (req, res) => {
+  try {
+    const [results] = await db.query("SELECT * FROM orders");
+    res.json({ success: true, orders: results });
+  } catch (err) {
+    console.error("❌ Error fetching orders:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
-// Remove item from cart
-app.delete("/api/cart/remove/:productId", authenticateToken, (req, res) => {
-  const userId = req.user.id;
-  const { productId } = req.params;
-  const sql = "DELETE FROM cart WHERE user_id = ? AND product_id = ?";
-  db.query(sql, [userId, productId], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    if (result.affectedRows === 0) return res.json({ success: false, message: "Item not found" });
-    res.json({ success: true, message: "Removed from cart" });
-  });
-});
-
-// Update item quantity
-app.put("/api/cart/update", authenticateToken, (req, res) => {
-  const userId = req.user.id;
-  const { productId, quantity } = req.body;
-
-  if (!productId || quantity < 1) return res.status(400).json({ success: false, message: "Invalid input" });
-
-  const sql = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
-  db.query(sql, [quantity, userId, productId], (err) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    res.json({ success: true, message: "Quantity updated" });
-  });
-});
-
-
-
-// Use routes
-app.use("/api/auth", authRoutes);
+// ==================== OTHER ROUTES ====================
 app.use("/api/collections", collectionsRoutes);
+app.use("/api/auth", authRoutes); // Deletion route lives here
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/orders", ordersRoutes);
+app.use("/api/feedback", feedbackRoutes(transporter, db));
 
 // ==================== START SERVER ====================
 const PORT = 5000;

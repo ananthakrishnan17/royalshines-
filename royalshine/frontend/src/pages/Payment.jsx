@@ -24,6 +24,12 @@ export default function Payment() {
     upiId: "",
     upiApp: ""
   });
+  const [netbankingDetails, setNetbankingDetails] = useState({
+    bankName: "",
+    accountNumber: "",
+    ifscCode: "",
+    accountHolderName: ""
+  });
   const [payAdvance, setPayAdvance] = useState(false);
   const advanceAmount = totalPrice >= 10000 ? Math.floor(totalPrice / 10) : 1000;
 
@@ -55,6 +61,11 @@ export default function Payment() {
   const handleUpiInputChange = (e) => {
     const { name, value } = e.target;
     setUpiDetails(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNetbankingInputChange = (e) => {
+    const { name, value } = e.target;
+    setNetbankingDetails(prev => ({ ...prev, [name]: value }));
   };
 
   const handlePayment = async (e) => {
@@ -176,7 +187,8 @@ export default function Payment() {
               razorpay_signature: response.razorpay_signature,
               shippingAddress,
               paymentMethod,
-              userDetails
+              userDetails,
+              netbankingDetails: paymentMethod === "netbanking" ? netbankingDetails : undefined
             }, {
               headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
             });
@@ -231,7 +243,7 @@ export default function Payment() {
           </div>
         </div>
         <form onSubmit={handlePayment} className="user-details-form">
-          {(paymentMethod === "card" || paymentMethod === "upi") && (
+          {(paymentMethod === "card" || paymentMethod === "upi" || paymentMethod === "netbanking") && (
             <>
               <h3>Enter Your Details</h3>
               <div className="form-group">
@@ -423,6 +435,66 @@ export default function Payment() {
                   <option value="bhim">BHIM UPI</option>
                   <option value="other">Other</option>
                 </select>
+              </div>
+            </>
+          )}
+          {paymentMethod === "netbanking" && (
+            <>
+              <h3>Net Banking Details</h3>
+              <div className="form-group">
+                <label htmlFor="bankName">Bank Name</label>
+                <select
+                  id="bankName"
+                  name="bankName"
+                  value={netbankingDetails.bankName}
+                  onChange={handleNetbankingInputChange}
+                  required
+                >
+                  <option value="">Select Bank</option>
+                  <option value="sbi">State Bank of India</option>
+                  <option value="hdfc">HDFC Bank</option>
+                  <option value="icici">ICICI Bank</option>
+                  <option value="axis">Axis Bank</option>
+                  <option value="pnb">Punjab National Bank</option>
+                  <option value="kotak">Kotak Mahindra Bank</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="accountNumber">Account Number</label>
+                <input
+                  type="text"
+                  id="accountNumber"
+                  name="accountNumber"
+                  value={netbankingDetails.accountNumber}
+                  onChange={handleNetbankingInputChange}
+                  placeholder="Enter account number"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="ifscCode">IFSC Code</label>
+                <input
+                  type="text"
+                  id="ifscCode"
+                  name="ifscCode"
+                  value={netbankingDetails.ifscCode}
+                  onChange={handleNetbankingInputChange}
+                  placeholder="Enter IFSC code"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="accountHolderName">Account Holder Name</label>
+                <input
+                  type="text"
+                  id="accountHolderName"
+                  name="accountHolderName"
+                  value={netbankingDetails.accountHolderName}
+                  onChange={handleNetbankingInputChange}
+                  placeholder="Enter account holder name"
+                  required
+                />
               </div>
             </>
           )}

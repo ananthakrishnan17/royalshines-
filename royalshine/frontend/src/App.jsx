@@ -13,7 +13,10 @@ import Wishlist from "./components/Wishlist.jsx";
 import Cart from "./pages/Cart.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import Payment from "./pages/Payment.jsx";
-import AddCollection from "./pages/AddCollection.jsx"; // ✅ Added this line
+import AddCollection from "./pages/AddCollection.jsx"; // ✅ Already imported
+import OrderHistory from "./pages/OrderHistory.jsx"; // ✅ New import for Order History
+import Feedback from "./pages/Feedback.jsx"; // ✅ New import for Feedback Page
+import OrdersManagement from "./pages/OrdersManagement.jsx"; // ✅ New import for Orders Management
 
 function App() {
   return (
@@ -39,8 +42,17 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/payment" element={<Payment />} />
 
-        {/* ✅ Add New Collection Page */}
+        {/* ✅ Add New Collection Page (Correctly implemented) */}
         <Route path="/add-collection" element={<AddCollection />} />
+
+        {/* ✅ New Order History Page */}
+        <Route path="/order-history" element={<OrderHistory />} />
+
+        {/* ✅ New Feedback Page */}
+        <Route path="/feedback" element={<Feedback />} />
+
+        {/* ✅ New Orders Management Page */}
+        <Route path="/admin/orders-management" element={<OrdersManagement />} />
       </Routes>
     </Router>
   );

@@ -76,6 +76,62 @@ header {
   line-height: 1.6;
 }
 
+/* ===== Collections Header ===== */
+.collections-header {
+  text-align: center;
+  padding: 40px 20px;
+  background: linear-gradient(120deg, #fff2cc, #ffe4b5);
+  border-bottom: 3px solid #d4a017;
+}
+
+.collections-header h1 {
+  font-size: 2.5rem;
+  color: #b8860b;
+  margin-bottom: 20px;
+}
+
+/* Responsive for collections header */
+@media (max-width: 768px) {
+  .collections-header h1 {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .collections-header h1 {
+    font-size: 1.5rem;
+  }
+}
+
+.admin-welcome {
+  font-size: 1.8rem;
+  color: #e74c3c;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.collections-header input {
+  padding: 25px 70px 25px 30px;
+  font-size: 1.8rem;
+  border: 3px solid #ddd;
+  border-radius: 30px;
+  outline: none;
+  width: 100%;
+  max-width: 900px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
+  background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE1IDExSDExVjE1SDE1VjExWk0xNiAxMEgxMFYxNkgxNlYTB6IiBmaWxsPSIjYWFhIi8+Cjwvc3ZnPgo=') no-repeat right 25px center;
+  background-size: 28px;
+  margin-bottom: 20px;
+}
+
+.collections-header input:focus {
+  border-color: #b8860b;
+  box-shadow: 0 8px 20px rgba(184, 134, 11, 0.4);
+  background-color: #fff;
+}
+
 /* ===== Search Bar ===== */
 .search-container {
   display: flex;
@@ -161,6 +217,7 @@ header {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  padding: 20px;
 }
 
 .item-card img {
@@ -172,9 +229,78 @@ header {
 }
 
 .item-card h3 {
-  padding: 10px 0;
-  font-size: 1.1rem;
+  margin: 15px 0 10px;
+  font-size: 1.2rem;
   color: #333;
+}
+
+.item-card p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.quantity {
+  font-weight: bold;
+  color: #28a745;
+}
+
+.item-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.add-to-cart-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
+}
+
+.add-to-cart-btn:hover {
+  background: #0056b3;
+}
+
+.add-to-wishlist-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
+}
+
+.add-to-wishlist-btn:hover {
+  background: #c82333;
+}
+
+.admin-item-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.admin-item-actions button {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.3s ease;
+}
+
+.admin-item-actions button:hover {
+  background: #5a6268;
 }
 
 /* Hover Effects */
